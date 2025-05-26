@@ -5,6 +5,7 @@ import com.back.domain.wiseSaying.entity.WiseSaying;
 import com.back.domain.wiseSaying.repository.WiseSayingRepository;
 import com.back.domain.wiseSaying.service.WiseSayingService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -31,29 +32,52 @@ public class App {
             System.out.print("명령) ");
             String input = scanner.nextLine();
 
-            if (input.equals("등록")) {
+            String[] parts = input.split("\\?", 2);
+            String cmd = parts[0];
+
+            if(cmd.equals("등록")){
                 actionWrite();
-            } else if (input.equals("목록")) {
-                actionList();
-            } else if (input.equals("종료")) {
-                break;
-            } else if (input.equals("빌드")) {
+            }
+            else if(cmd.equals("목록")){
+                if(parts.length > 1) {
+                    List<String> opts = extractKeyword(parts[1]);
+                    if(opts.size() != 2){
+                        System.out.println("잘못된 입력입니다.");
+                        continue;
+                    }
+                    String type = opts.get(0);
+                    String key = opts.get(1);
+                    actionListByKeyword(type, key);
+                }
+                else{
+                    actionList();
+                }
+            }
+            else if(cmd.equals("수정")){
+                if(parts.length > 1){
+                    getIndex = extractId(parts[1]);
+                    if(getIndex == -1){
+                        System.out.println("잘못된 id 입력입니다.");
+                        continue;
+                    }
+                    actionModify(getIndex);
+                }
+            }
+            else if(cmd.equals("삭제")){
+                if(parts.length > 1){
+                    getIndex = extractId(parts[1]);
+                    if(getIndex == -1){
+                        System.out.println("잘못된 id 입력입니다.");
+                        continue;
+                    }
+                    actionDelete(getIndex);
+                }
+            }
+            else if(cmd.equals("빌드")){
                 actionBuild();
             }
-            else if (input.startsWith("삭제?id=")) {
-                getIndex = extractId(input);
-                if(getIndex == -1){
-                    System.out.println("잘못된 id 입력입니다.");
-                    continue;
-                }
-                actionDelete(getIndex);
-            } else if (input.startsWith("수정?id=")) {
-                getIndex = extractId(input);
-                if(getIndex == -1){
-                    System.out.println("잘못된 id 입력입니다.");
-                    continue;
-                }
-                actionModify(getIndex);
+            else if(cmd.equals("종료")){
+                break;
             }
         }
     }
@@ -73,6 +97,21 @@ public class App {
         System.out.println("----------------------");
         List<WiseSaying> wiseSayings = wiseSayingController.list();
 
+        wiseSayings.sort((a, b) -> Integer.compare(b.id, a.id));
+
+        for(WiseSaying ws : wiseSayings){
+            ws.printWiseSaying();
+        }
+    }
+
+    void actionListByKeyword(String type, String key) {
+        System.out.println("번호 / 작가 / 명언");
+        System.out.println("----------------------");
+        System.out.println("검색타입 : " + type);
+        System.out.println("검색어 : " + key);
+        System.out.println("----------------------");
+
+        List<WiseSaying> wiseSayings = wiseSayingController.listByKeyword(type, key);
         wiseSayings.sort((a, b) -> Integer.compare(b.id, a.id));
 
         for(WiseSaying ws : wiseSayings){
@@ -117,5 +156,16 @@ public class App {
         Pattern pattern = Pattern.compile("id=(\\d+)");
         Matcher matcher = pattern.matcher(input);
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
+    }
+
+    private List<String> extractKeyword(String input) {
+        List<String> result = new ArrayList<>();
+        Pattern pattern = Pattern.compile("keywordType=([^&]+)&keyword=([^&]+)");
+        Matcher matcher = pattern.matcher(input);
+        if (matcher.find()) {
+            result.add(matcher.group(1));
+            result.add(matcher.group(2));
+        }
+        return result;
     }
 }

@@ -20,6 +20,8 @@ public class WiseSayingController {
         return wiseSayingService.findAll();
     }
 
+    public List<WiseSaying> listByKeyword(String type, String key) { return wiseSayingService.findByKeyword(type, key); }
+
     public boolean delete(int id){
         return wiseSayingService.deleteById(id);
     }

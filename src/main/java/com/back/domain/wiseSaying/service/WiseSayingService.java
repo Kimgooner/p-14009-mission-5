@@ -3,7 +3,9 @@ package com.back.domain.wiseSaying.service;
 import com.back.domain.wiseSaying.entity.WiseSaying;
 import com.back.domain.wiseSaying.repository.WiseSayingRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class WiseSayingService {
     private final WiseSayingRepository wiseSayingRepository;
@@ -19,6 +21,24 @@ public class WiseSayingService {
         wiseSayingRepository.saveFile(wiseSaying);
         wiseSayingRepository.saveLastId(++lastId);
         return wiseSaying;
+    }
+
+    public List<WiseSaying> findByKeyword(String type, String key){
+        List<WiseSaying> wiseSayings = wiseSayingRepository.loadAll();
+        List<WiseSaying> filtered = new ArrayList<>();
+
+        if(type.equals("content")){
+            filtered = wiseSayings.stream()
+                    .filter(w -> w.content.contains(key))
+                    .collect(Collectors.toList());
+        }
+        else if(type.equals("author")){
+            filtered = wiseSayings.stream()
+                    .filter(w -> w.author.contains(key))
+                    .collect(Collectors.toList());
+        }
+
+        return filtered;
     }
 
     public List<WiseSaying> findAll(){
