@@ -1,5 +1,6 @@
 package com.back.domain.wiseSaying.service;
 
+import com.back.domain.wiseSaying.dto.PagingResult;
 import com.back.domain.wiseSaying.entity.WiseSaying;
 import com.back.domain.wiseSaying.repository.WiseSayingRepository;
 
@@ -23,7 +24,11 @@ public class WiseSayingService {
         return wiseSaying;
     }
 
-    public List<WiseSaying> findByKeyword(String type, String key){
+    public int getSize(){
+        return wiseSayingRepository.getSize();
+    }
+
+    public List<WiseSaying> findByKeyword(int page, String type, String key){
         List<WiseSaying> wiseSayings = wiseSayingRepository.loadAll();
         List<WiseSaying> filtered = new ArrayList<>();
 
@@ -38,11 +43,16 @@ public class WiseSayingService {
                     .collect(Collectors.toList());
         }
 
+        filtered.sort((a, b) -> Integer.compare(b.id, a.id));
+
         return filtered;
     }
 
-    public List<WiseSaying> findAll(){
-        return wiseSayingRepository.loadAll();
+    public List<WiseSaying> findAll(int page){
+        List<WiseSaying> wiseSayings = wiseSayingRepository.loadAll();
+        wiseSayings.sort((a, b) -> Integer.compare(b.id, a.id));
+
+        return wiseSayings;
     }
 
     public void makeBuild(){

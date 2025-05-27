@@ -1,6 +1,7 @@
 package com.back;
 
 import com.back.domain.wiseSaying.controller.WiseSayingController;
+import com.back.domain.wiseSaying.dto.PagingResult;
 import com.back.domain.wiseSaying.entity.WiseSaying;
 import com.back.domain.wiseSaying.repository.WiseSayingRepository;
 import com.back.domain.wiseSaying.service.WiseSayingService;
@@ -27,6 +28,9 @@ public class App {
 
     void run() {
         System.out.println("== 명언 앱 ==");
+        if(wiseSayingController.getSize() == 0){
+            makeSample();
+        }
 
         while (true) {
             System.out.print("명령) ");
@@ -40,17 +44,19 @@ public class App {
             }
             else if(cmd.equals("목록")){
                 if(parts.length > 1) {
-                    List<String> opts = extractKeyword(parts[1]);
-                    if(opts.size() != 2){
-                        System.out.println("잘못된 입력입니다.");
-                        continue;
+                    int pageVal = 1;
+                    String page = extractParam("page", parts[1]);
+                    String keywordType = extractParam("keywordType", parts[1]);
+                    String keyword = extractParam("keyword", parts[1]);
+
+                    if(page != null){
+                        pageVal = Integer.parseInt(page);
                     }
-                    String type = opts.get(0);
-                    String key = opts.get(1);
-                    actionListByKeyword(type, key);
+
+                    actionListByParam(pageVal, keywordType, keyword);
                 }
                 else{
-                    actionList();
+                    actionListByParam(1, null, null);
                 }
             }
             else if(cmd.equals("수정")){
@@ -82,6 +88,13 @@ public class App {
         }
     }
 
+    void makeSample(){
+        for(int i = 1; i <= 10; i++){
+            wiseSayingController.write("명언 " + i, "작자미상 " + i);
+        }
+        System.out.println("명언 데이터가 0개 입니다. 샘플 데이터가 생성되었습니다.");
+    }
+
     void actionWrite(){
         System.out.print("명언 : ");
         String content = scanner.nextLine();
@@ -92,31 +105,57 @@ public class App {
         System.out.println(wiseSaying.id + "번 명언이 등록되었습니다.");
     }
 
-    void actionList() {
+    void actionListByParam(int page, String keywordType, String keyword) {
+        List<WiseSaying> wiseSayings = wiseSayingController.list(page, keywordType, keyword);
+
+        if(wiseSayings.isEmpty()){
+            System.out.println("항목이 존재하지 않습니다.");
+            return;
+        }
+
+        int maxPage = ((wiseSayings.size() - 1) / 5) + 1;
+        if(page > maxPage) {
+            System.out.println("잘못된 페이지 입력입니다.");
+            return;
+        }
+
+        int startPos = (page-1) * 5;
+        int endPos = page * 5;
+
+        if(endPos > wiseSayings.size()){
+            endPos = wiseSayings.size();
+        }
+
+        List<WiseSaying> wiseSayingsSubList = wiseSayings.subList(startPos, endPos);
+
         System.out.println("번호 / 작가 / 명언");
         System.out.println("----------------------");
-        List<WiseSaying> wiseSayings = wiseSayingController.list();
 
-        wiseSayings.sort((a, b) -> Integer.compare(b.id, a.id));
+        if(keywordType != null){
+            System.out.println("검색타입 : " + keywordType);
+            System.out.println("검색어 : " + keyword);
+            System.out.println("----------------------");
+        }
 
-        for(WiseSaying ws : wiseSayings){
+        for(WiseSaying ws : wiseSayingsSubList){
             ws.printWiseSaying();
         }
-    }
 
-    void actionListByKeyword(String type, String key) {
-        System.out.println("번호 / 작가 / 명언");
         System.out.println("----------------------");
-        System.out.println("검색타입 : " + type);
-        System.out.println("검색어 : " + key);
-        System.out.println("----------------------");
+        System.out.print("페이지 : ");
+        for(int i = 1; i <= maxPage; i++){
+            if(i == page){
+                System.out.print("[" + i + "]");
+            }
+            else{
+                System.out.print(i);
+            }
 
-        List<WiseSaying> wiseSayings = wiseSayingController.listByKeyword(type, key);
-        wiseSayings.sort((a, b) -> Integer.compare(b.id, a.id));
-
-        for(WiseSaying ws : wiseSayings){
-            ws.printWiseSaying();
+            if(i != maxPage){
+                System.out.print(" / ");
+            }
         }
+        System.out.println();
     }
 
     void actionBuild(){
@@ -158,14 +197,9 @@ public class App {
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
     }
 
-    private List<String> extractKeyword(String input) {
-        List<String> result = new ArrayList<>();
-        Pattern pattern = Pattern.compile("keywordType=([^&]+)&keyword=([^&]+)");
+    private String extractParam(String Type, String input){
+        Pattern pattern = Pattern.compile(Type + "=([^&]+)");
         Matcher matcher = pattern.matcher(input);
-        if (matcher.find()) {
-            result.add(matcher.group(1));
-            result.add(matcher.group(2));
-        }
-        return result;
+        return matcher.find() ? matcher.group(1) : null;
     }
 }

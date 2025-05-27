@@ -34,6 +34,14 @@ public class WiseSayingRepository {
         return list;
     }
 
+    public int getSize(){
+        File path = new File(basePath);
+        File[] files = path.listFiles((dir, name) -> name.endsWith(".json") && !name.equals("lastId.txt") && !name.equals("build.json"));
+
+        if(files != null) return files.length;
+        else return 1;
+    }
+
     public WiseSaying loadById(int id){
         File file = new File(basePath + id + ".json");
         WiseSaying check = new WiseSaying(-1, "", "");

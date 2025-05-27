@@ -1,5 +1,6 @@
 package com.back.domain.wiseSaying.controller;
 
+import com.back.domain.wiseSaying.dto.PagingResult;
 import com.back.domain.wiseSaying.entity.WiseSaying;
 import com.back.domain.wiseSaying.service.WiseSayingService;
 
@@ -16,11 +17,18 @@ public class WiseSayingController {
         return wiseSayingService.create(content, author);
     }
 
-    public List<WiseSaying> list(){
-        return wiseSayingService.findAll();
+    public List<WiseSaying> list(int page, String keywordType, String keyword) {
+        if(keywordType != null){
+            return wiseSayingService.findByKeyword(page, keywordType, keyword);
+        }
+        else{
+            return wiseSayingService.findAll(page);
+        }
     }
 
-    public List<WiseSaying> listByKeyword(String type, String key) { return wiseSayingService.findByKeyword(type, key); }
+    public int getSize(){
+        return wiseSayingService.getSize();
+    }
 
     public boolean delete(int id){
         return wiseSayingService.deleteById(id);
